@@ -1,82 +1,90 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_KEY
+);
 
 export default function PriceCompare() {
-  const [rows, setRows] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    const { createClient } = require('@supabase/supabase-js')
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_KEY
-    )
-
-    const load = async () => {
+    async function fetchData() {
       const { data, error } = await supabase
         .from('competitor_price_comparison')
         .select('*')
-        .order('fetched_at', { ascending: false })
+        .order('fetched_at', { ascending: false });
 
-      if (error) console.error('❌ Supabase error:', error)
-      else setRows(data)
-
-      setLoading(false)
+      if (error) console.error('❌ Supabase fetch error:', error.message);
+      else setProducts(data);
     }
 
-    load()
-  }, [])
+    fetchData();
+  }, []);
 
-  if (loading) return <p>Loading...</p>
+  function getDiffStyle(shopify, competitor) {
+    if (shopify < competitor) return { backgroundColor: '#f8d7da' }; // red
+    if (shopify <= competitor * 1.1) return { backgroundColor: '#d4edda' }; // green
+    return { backgroundColor: '#fff3cd' }; // yellow
+  }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>📊 Price Comparison</h1>
-      <table border="1" cellPadding="6" cellSpacing="0" style={{ width: '100%', marginTop: 20 }}>
+    <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
+      <h1 style={{ fontSize: '2rem' }}>🧾 Price Comparison</h1>
+      <table border="1" cellPadding="8" cellSpacing="0" style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            <th>Product</th>
-            <th>Barcode</th>
-            <th>Shopify</th>
-            <th>Competitor</th>
-            <th>Difference</th>
+            <th>🖼 Image</th>
+            <th>📦 Product</th>
+            <th>🏷 Barcode</th>
+            <th>💰 Shopify Price</th>
+            <th>💸 Competitor Price</th>
+            <th>💹 Diff</th>
             <th>% Diff</th>
-            <th>Source</th>
-            <th>Link</th>
+            <th>🌍 Source</th>
+            <th>⏰ Last Updated</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => {
-
-const priceDiff = r.shopify_price - r.competitor_price
-const percentDiff = (priceDiff / r.competitor_price) * 100
-
-let backgroundColor = '#ffffff'
-
-if (r.shopify_price < r.competitor_price) {
-  backgroundColor = '#ffdddd' // 🔴 We're cheaper — warning
-} else if (percentDiff > 15) {
-  backgroundColor = '#fff4cc' // 🟡 More than 15% more
-} else {
-  backgroundColor = '#ddffdd' // 🟢 Within 10% or matched
-}
-
-const diffStyle = { backgroundColor, fontWeight: 'bold' }
+          {products.map((row) => {
+            const shopifyPrice = row.shopify_price || 0;
+            const competitorPrice = row.competitor_price || 0;
+            const priceDiff = (shopifyPrice - competitorPrice).toFixed(2);
+            const percentDiff = competitorPrice
+              ? (((shopifyPrice - competitorPrice) / competitorPrice) * 100).toFixed(2)
+              : null;
 
             return (
-              <tr key={r.competitor_price_id}>
-                <td>{r.title}</td>
-                <td>{r.barcode}</td>
-                <td>£{r.shopify_price}</td>
-                <td>£{r.competitor_price}</td>
-                <td style={diffStyle}>£{r.price_difference}</td>
-                <td style={diffStyle}>{r.percent_difference}%</td>
-                <td>{r.source}</td>
-                <td><a href={r.competitor_url} target="_blank">🔗</a></td>
+              <tr key={row.competitor_price_id}>
+                <td>
+                  {row.image_url ? (
+                    <img src={row.image_url} alt="product" style={{ width: '50px', height: 'auto' }} />
+                  ) : (
+                    '❌'
+                  )}
+                </td>
+                <td>{row.title || '—'}</td>
+                <td>{row.barcode || '—'}</td>
+                <td>£{shopifyPrice.toFixed(2)}</td>
+                <td>{competitorPrice ? `£${competitorPrice.toFixed(2)}` : '—'}</td>
+                <td style={getDiffStyle(shopifyPrice, competitorPrice)}>£{priceDiff}</td>
+                <td style={getDiffStyle(shopifyPrice, competitorPrice)}>{percentDiff ? `${percentDiff}%` : '—'}</td>
+                <td>
+                  {row.competitor_url ? (
+                    <a href={row.competitor_url} target="_blank" rel="noopener noreferrer">
+                      {row.source}
+                    </a>
+                  ) : (
+                    row.source
+                  )}
+                </td>
+                <td>{new Date(row.fetched_at).toLocaleString('en-GB')}</td>
               </tr>
-            )
+            );
           })}
         </tbody>
       </table>
     </div>
-  )
+  );
 }
