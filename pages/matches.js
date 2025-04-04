@@ -29,6 +29,18 @@ export default function WeeklyOrdersWithMatches() {
     fetchSales()
   }, [])
 
+  const getHighlightStyle = (homePrice, toolbankPrice, source) => {
+    const h = parseFloat(homePrice)
+    const t = parseFloat(toolbankPrice)
+
+    if (isNaN(h) || isNaN(t)) return {}
+
+    if (source === 'home' && h < t) return { backgroundColor: '#d4edda' }
+    if (source === 'toolbank' && t < h) return { backgroundColor: '#d4edda' }
+
+    return {}
+  }
+
   return (
     <div style={{ padding: '2rem' }}>
       <h1>🔍 Weekly Orders with Matches</h1>
@@ -59,11 +71,15 @@ export default function WeeklyOrdersWithMatches() {
               <td style={td}>{sale.home_hardware_name}</td>
               <td style={td}>{sale.home_hardware_price}</td>
               <td style={td}>{sale.home_hardware_discount}</td>
-              <td style={td}>{sale.home_hardware_actual_price}</td>
+              <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, 'home') }}>
+                {sale.home_hardware_actual_price}
+              </td>
               <td style={td}>{sale.toolbank_name}</td>
               <td style={td}>{sale.toolbank_price}</td>
               <td style={td}>{sale.toolbank_discount}</td>
-              <td style={td}>{sale.toolbank_actual_price}</td>
+              <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, 'toolbank') }}>
+                {sale.toolbank_actual_price}
+              </td>
             </tr>
           ))}
         </tbody>
