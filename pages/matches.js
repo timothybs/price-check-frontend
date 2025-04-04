@@ -56,11 +56,9 @@ export default function WeeklyOrdersWithMatches() {
             <th style={th}>Product Name</th>
             <th style={th}>Quantity</th>
             <th style={th}>Order Date</th>
-            <th style={th}>Home Hardware Name</th>
             <th style={th}>Home Price</th>
             <th style={th}>Home Discount</th>
             <th style={th}>Home Actual</th>
-            <th style={th}>Toolbank Name</th>
             <th style={th}>Toolbank Price</th>
             <th style={th}>Toolbank Discount</th>
             <th style={th}>Toolbank Actual</th>
@@ -88,13 +86,11 @@ export default function WeeklyOrdersWithMatches() {
               </td>
               <td style={td}>{sale.quantity}</td>
               <td style={td}>{sale.order_date}</td>
-              <td style={td}>{sale.home_hardware_name}</td>
               <td style={td}>{sale.home_hardware_price}</td>
               <td style={td}>{sale.home_hardware_discount}</td>
               <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, 'home') }}>
                 {sale.home_hardware_actual_price}
               </td>
-              <td style={td}>{sale.toolbank_name}</td>
               <td style={td}>{sale.toolbank_price}</td>
               <td style={td}>{sale.toolbank_discount}</td>
               <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, 'toolbank') }}>
