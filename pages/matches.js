@@ -35,14 +35,18 @@ export default function WeeklyOrdersWithMatches() {
     fetchSales()
   }, [])
 
-  const getHighlightStyle = (homePrice, toolbankPrice, source) => {
+  const getHighlightStyle = (homePrice, toolbankPrice, staxPrice, source) => {
     const h = parseFloat(homePrice)
     const t = parseFloat(toolbankPrice)
+    const s = parseFloat(staxPrice)
 
-    if (isNaN(h) || isNaN(t)) return {}
+    if ([h, t, s].every(Number.isNaN)) return {}
 
-    if (source === 'home' && h < t) return { backgroundColor: '#d4edda' }
-    if (source === 'toolbank' && t < h) return { backgroundColor: '#d4edda' }
+    const min = Math.min(...[h, t, s].filter(p => !isNaN(p)))
+
+    if (source === 'home' && h === min) return { backgroundColor: '#d4edda' }
+    if (source === 'toolbank' && t === min) return { backgroundColor: '#d4edda' }
+    if (source === 'stax' && s === min) return { backgroundColor: '#d4edda' }
 
     return {}
   }
@@ -65,6 +69,7 @@ export default function WeeklyOrdersWithMatches() {
             <th style={th}>Toolbank Price</th>
             <th style={th}>Toolbank Discount</th>
             <th style={th}>Toolbank Actual</th>
+            <th style={th}>Stax Actual</th>
           </tr>
         </thead>
         <tbody>
@@ -72,9 +77,9 @@ export default function WeeklyOrdersWithMatches() {
             <tr key={sale.id}>
               <td style={td}>{sale.barcode}</td>
               <td style={td}>
-                <div onClick={() => (sale.home_hardware_name || sale.toolbank_name) && toggleExpand(sale.id)} style={{ cursor: sale.home_hardware_name || sale.toolbank_name ? 'pointer' : 'default' }}>
+                <div onClick={() => (sale.home_hardware_name || sale.toolbank_name || sale.stax_name) && toggleExpand(sale.id)} style={{ cursor: sale.home_hardware_name || sale.toolbank_name || sale.stax_name ? 'pointer' : 'default' }}>
                   {sale.product_name}
-                  {(sale.home_hardware_name || sale.toolbank_name) && (
+                  {(sale.home_hardware_name || sale.toolbank_name || sale.stax_name) && (
                     <span style={{ marginLeft: '0.5rem', color: '#888' }}>
                       {expandedRows[sale.id] ? '−' : '+'}
                     </span>
@@ -84,6 +89,7 @@ export default function WeeklyOrdersWithMatches() {
                   <div style={{ marginTop: '0.5rem', fontSize: '0.9em', color: '#555' }}>
                     {sale.home_hardware_name && <div><strong>Home:</strong> {sale.home_hardware_name}</div>}
                     {sale.toolbank_name && <div><strong>Toolbank:</strong> {sale.toolbank_name}</div>}
+                    {sale.stax_name && <div><strong>Stax:</strong> {sale.stax_name}</div>}
                   </div>
                 )}
               </td>
@@ -92,14 +98,17 @@ export default function WeeklyOrdersWithMatches() {
               <td style={td}>{sale.home_hardware_name}</td>
               <td style={td}>{sale.home_hardware_price}</td>
               <td style={td}>{sale.home_hardware_discount}</td>
-              <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, 'home') }}>
+              <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, sale.stax_actual_price, 'home') }}>
                 {sale.home_hardware_actual_price}
               </td>
               <td style={td}>{sale.toolbank_name}</td>
               <td style={td}>{sale.toolbank_price}</td>
               <td style={td}>{sale.toolbank_discount}</td>
-              <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, 'toolbank') }}>
+              <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, sale.stax_actual_price, 'toolbank') }}>
                 {sale.toolbank_actual_price}
+              </td>
+              <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, sale.stax_actual_price, 'stax') }}>
+                {sale.stax_actual_price}
               </td>
             </tr>
           ))}
