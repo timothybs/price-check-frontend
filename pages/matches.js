@@ -23,14 +23,15 @@ export default function WeeklyOrdersWithMatches() {
         .from('weekly_sales_with_matches')
         .select('*')
         .order('order_date', { ascending: false })
-
+  
       if (error) {
         console.error('❌ Error fetching matched sales:', error.message)
       } else {
+        console.log('✅ Sales data:', data) // <—— Add this line here
         setSales(data)
       }
     }
-
+  
     fetchSales()
   }, [])
 
