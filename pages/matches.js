@@ -11,6 +11,11 @@ const supabase = createClient(
 
 export default function WeeklyOrdersWithMatches() {
   const [sales, setSales] = useState([])
+  const [expandedRows, setExpandedRows] = useState({})
+
+  const toggleExpand = (id) => {
+    setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
 
   useEffect(() => {
     const fetchSales = async () => {
@@ -65,7 +70,22 @@ export default function WeeklyOrdersWithMatches() {
           {sales.map((sale) => (
             <tr key={sale.id}>
               <td style={td}>{sale.barcode}</td>
-              <td style={td}>{sale.product_name}</td>
+              <td style={td}>
+                <div onClick={() => (sale.home_hardware_name || sale.toolbank_name) && toggleExpand(sale.id)} style={{ cursor: sale.home_hardware_name || sale.toolbank_name ? 'pointer' : 'default' }}>
+                  {sale.product_name}
+                  {(sale.home_hardware_name || sale.toolbank_name) && (
+                    <span style={{ marginLeft: '0.5rem', color: '#888' }}>
+                      {expandedRows[sale.id] ? '−' : '+'}
+                    </span>
+                  )}
+                </div>
+                {expandedRows[sale.id] && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.9em', color: '#555' }}>
+                    {sale.home_hardware_name && <div><strong>Home:</strong> {sale.home_hardware_name}</div>}
+                    {sale.toolbank_name && <div><strong>Toolbank:</strong> {sale.toolbank_name}</div>}
+                  </div>
+                )}
+              </td>
               <td style={td}>{sale.quantity}</td>
               <td style={td}>{sale.order_date}</td>
               <td style={td}>{sale.home_hardware_name}</td>
