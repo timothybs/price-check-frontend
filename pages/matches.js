@@ -93,17 +93,6 @@ export default function WeeklyOrdersWithMatches() {
               </td>
               <td style={td}>{sale.quantity}</td>
               <td style={td}>{sale.order_date}</td>
-<<<<<<< HEAD
-              <td style={td}>{sale.home_hardware_price}</td>
-              <td style={td}>{sale.home_hardware_discount}</td>
-              <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, 'home') }}>
-                {sale.home_hardware_actual_price}
-              </td>
-              <td style={td}>{sale.toolbank_price}</td>
-              <td style={td}>{sale.toolbank_discount}</td>
-              <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, 'toolbank') }}>
-                {sale.toolbank_actual_price}
-=======
               <td style={td}>
                 {sale.home_hardware_price != null ? `£${parseFloat(sale.home_hardware_price).toFixed(2)}` : ''}
               </td>
@@ -124,7 +113,6 @@ export default function WeeklyOrdersWithMatches() {
               </td>
               <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, sale.stax_actual_price, 'stax') }}>
                 {sale.stax_actual_price != null ? `£${parseFloat(sale.stax_actual_price).toFixed(2)}` : ''}
->>>>>>> deployed-fix
               </td>
             </tr>
           ))}
