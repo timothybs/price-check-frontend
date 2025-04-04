@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-// Testing
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_KEY
@@ -59,10 +59,8 @@ export default function WeeklyOrdersWithMatches() {
             <th style={th}>Quantity</th>
             <th style={th}>Order Date</th>
             <th style={th}>Home Price</th>
-            <th style={th}>Home Discount</th>
             <th style={th}>Home Actual</th>
             <th style={th}>Toolbank Price</th>
-            <th style={th}>Toolbank Discount</th>
             <th style={th}>Toolbank Actual</th>
             <th style={th}>Stax Actual</th>
           </tr>
@@ -93,17 +91,11 @@ export default function WeeklyOrdersWithMatches() {
               <td style={td}>
                 {sale.home_hardware_price != null ? `£${parseFloat(sale.home_hardware_price).toFixed(2)}` : ''}
               </td>
-              <td style={td}>
-                {sale.home_hardware_discount != null ? `${sale.home_hardware_discount}%` : ''}
-              </td>
               <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, sale.stax_actual_price, 'home') }}>
                 {sale.home_hardware_actual_price != null ? `£${parseFloat(sale.home_hardware_actual_price).toFixed(2)}` : ''}
               </td>
               <td style={td}>
                 {sale.toolbank_price != null ? `£${parseFloat(sale.toolbank_price).toFixed(2)}` : ''}
-              </td>
-              <td style={td}>
-                {sale.toolbank_discount != null ? `${sale.toolbank_discount}%` : ''}
               </td>
               <td style={{ ...td, ...getHighlightStyle(sale.home_hardware_actual_price, sale.toolbank_actual_price, sale.stax_actual_price, 'toolbank') }}>
                 {sale.toolbank_actual_price != null ? `£${parseFloat(sale.toolbank_actual_price).toFixed(2)}` : ''}
