@@ -122,7 +122,7 @@ export default function WeeklyOrdersWithMatches() {
   const generateCSVBlob = (filteredSales) => {
     const csvRows = [
       ['Barcode', 'Quantity'], // Header
-      ...filteredSales.map(sale => [sale.barcode, sale.quantity])
+      ...filteredSales.map(sale => [sale.barcode.padStart(13, '0'), sale.quantity])
     ];
     const csvString = csvRows.map(row => row.join(',')).join('\n');
     return new Blob([csvString], { type: 'text/csv' });
