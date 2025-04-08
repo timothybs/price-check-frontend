@@ -247,6 +247,10 @@ const th = {
   borderBottom: '2px solid #ccc',
   textAlign: 'left',
   padding: '8px',
+  position: 'sticky',
+  top: 0,
+  background: '#fff',
+  zIndex: 2,
 }
 
 const td = {
