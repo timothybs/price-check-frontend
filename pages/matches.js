@@ -119,6 +119,45 @@ export default function WeeklyOrdersWithMatches() {
     return {}
   }
 
+  const generateCSVBlob = (filteredSales) => {
+    const csvRows = [
+      ['Barcode', 'Quantity'], // Header
+      ...filteredSales.map(sale => [sale.barcode, sale.quantity])
+    ];
+    const csvString = csvRows.map(row => row.join(',')).join('\n');
+    return new Blob([csvString], { type: 'text/csv' });
+  };
+
+  const downloadCSV = (supplier) => {
+    let filteredSales = sales.filter(sale => {
+      const h = parseFloat(sale.home_hardware_actual_price);
+      const t = parseFloat(sale.toolbank_actual_price);
+      const s = parseFloat(sale.stax_actual_price);
+  
+      const prices = [h, t, s].filter(p => !isNaN(p));
+      const min = Math.min(...prices);
+  
+      if (supplier === 'home') {
+        return !isNaN(h) && h === min;
+      } else if (supplier === 'toolbank') {
+        return !isNaN(t) && t === min;
+      } else if (supplier === 'stax') {
+        return !isNaN(s) && s === min;
+      }
+      return false;
+    });
+    
+    const blob = generateCSVBlob(filteredSales);
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${supplier}_best_actual_sales.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div style={{ padding: '2rem' }}>
       <h1>🔍 Weekly Orders with Matches</h1>
@@ -132,11 +171,16 @@ export default function WeeklyOrdersWithMatches() {
       {sales.length > 0 && (
         <div style={{ margin: '1rem 0' }}>
           <strong>Total Home Actual: </strong> £{homeTotal.toFixed(2)} <br />
-          <strong>Total Home Best Actual: </strong> £{homeBestTotal.toFixed(2)} <br />
+          <strong>Total Home Best Actual: </strong> £{homeBestTotal.toFixed(2)} 
+          <button onClick={() => downloadCSV('home')}>Export CSV</button>
+          <br />
           <strong>Total Toolbank Actual: </strong> £{toolbankTotal.toFixed(2)} <br />
-          <strong>Total Toolbank Best Actual: </strong> £{toolbankBestTotal.toFixed(2)} <br />
+          <strong>Total Toolbank Best Actual: </strong> £{toolbankBestTotal.toFixed(2)} 
+          <button onClick={() => downloadCSV('toolbank')}>Export CSV</button>
+          <br />
           <strong>Total Stax Actual: </strong> £{staxTotal.toFixed(2)} <br />
-          <strong>Total Stax Best Actual: </strong> £{staxBestTotal.toFixed(2)}
+          <strong>Total Stax Best Actual: </strong> £{staxBestTotal.toFixed(2)} 
+          <button onClick={() => downloadCSV('stax')}>Export CSV</button>
         </div>
       )}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
