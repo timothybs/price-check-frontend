@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -8,7 +8,10 @@ const supabase = createClient(
 
 export default function WeeklyOrdersWithMatches() {
   const [sales, setSales] = useState([])
+  const [itemCount, setItemCount] = useState(0)
   const [expandedRows, setExpandedRows] = useState({})
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
   const toggleExpand = (id) => {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }))
@@ -16,21 +19,89 @@ export default function WeeklyOrdersWithMatches() {
 
   useEffect(() => {
     const fetchSales = async () => {
-      const { data, error } = await supabase
-        .from('weekly_sales_with_matches')
-        .select('*')
-        .order('order_date', { ascending: false })
+      if (startDate && endDate) {
+        const { data, error } = await supabase
+          .from('weekly_sales_with_matches')
+          .select('*')
+          .gte('order_date', startDate)
+          .lte('order_date', endDate)
+          .order('order_date', { ascending: false })
   
-      if (error) {
-        console.error('❌ Error fetching matched sales:', error.message)
-      } else {
-        console.log('✅ Sales data:', data) // <—— Add this line here
-        setSales(data)
+        if (error) {
+          console.error('❌ Error fetching matched sales:', error.message)
+        } else {
+          console.log('✅ Sales data:', data)
+          setSales(data)
+          setItemCount(data.length)
+        }
       }
     }
   
     fetchSales()
-  }, [])
+  }, [startDate, endDate])
+
+  const homeTotal = useMemo(() => {
+    return sales.reduce((total, sale) => total + (sale.home_hardware_actual_price || 0), 0)
+  }, [sales])
+
+  const homeBestTotal = useMemo(() => {
+    return sales.reduce((total, sale) => {
+      const h = parseFloat(sale.home_hardware_actual_price);
+      const t = parseFloat(sale.toolbank_actual_price);
+      const s = parseFloat(sale.stax_actual_price);
+  
+      const prices = [h, t, s].filter(p => !isNaN(p));
+      const min = Math.min(...prices);
+  
+      if (!isNaN(h) && h === min) {
+        return total + h;
+      }
+  
+      return total;
+    }, 0);
+  }, [sales]);
+
+  const toolbankTotal = useMemo(() => {
+    return sales.reduce((total, sale) => total + (sale.toolbank_actual_price || 0), 0)
+  }, [sales])
+
+  const toolbankBestTotal = useMemo(() => {
+    return sales.reduce((total, sale) => {
+      const h = parseFloat(sale.home_hardware_actual_price);
+      const t = parseFloat(sale.toolbank_actual_price);
+      const s = parseFloat(sale.stax_actual_price);
+  
+      const prices = [h, t, s].filter(p => !isNaN(p));
+      const min = Math.min(...prices);
+  
+      if (!isNaN(t) && t === min) {
+        return total + t;
+      }
+  
+      return total;
+    }, 0);
+  }, [sales]);
+
+  const staxTotal = useMemo(() => {
+    return sales.reduce((total, sale) => total + (sale.stax_actual_price || 0), 0)
+  }, [sales])
+
+  const staxBestTotal = useMemo(() => {
+    return sales.reduce((total, sale) => {
+      const h = parseFloat(sale.home_hardware_actual_price);
+      const t = parseFloat(sale.toolbank_actual_price);
+      const s = parseFloat(sale.stax_actual_price);
+  
+      const prices = [h, t, s].filter(p => !isNaN(p));
+      const min = Math.min(...prices);
+  
+      if (!isNaN(s) && s === min) {
+        return total + s;
+      }
+  
+      return total;
+    }, 0);
+  }, [sales]);
 
   const getHighlightStyle = (homePrice, toolbankPrice, staxPrice, source) => {
     const h = parseFloat(homePrice)
@@ -51,6 +122,23 @@ export default function WeeklyOrdersWithMatches() {
   return (
     <div style={{ padding: '2rem' }}>
       <h1>🔍 Weekly Orders with Matches</h1>
+      <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+      <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+      {startDate && endDate && (
+        <div style={{ margin: '1rem 0' }}>
+          <strong>Total Matches: </strong>{itemCount}
+        </div>
+      )}
+      {sales.length > 0 && (
+        <div style={{ margin: '1rem 0' }}>
+          <strong>Total Home Actual: </strong> £{homeTotal.toFixed(2)} <br />
+          <strong>Total Home Best Actual: </strong> £{homeBestTotal.toFixed(2)} <br />
+          <strong>Total Toolbank Actual: </strong> £{toolbankTotal.toFixed(2)} <br />
+          <strong>Total Toolbank Best Actual: </strong> £{toolbankBestTotal.toFixed(2)} <br />
+          <strong>Total Stax Actual: </strong> £{staxTotal.toFixed(2)} <br />
+          <strong>Total Stax Best Actual: </strong> £{staxBestTotal.toFixed(2)}
+        </div>
+      )}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
         <thead>
           <tr>
