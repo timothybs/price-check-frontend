@@ -120,9 +120,18 @@ export default function WeeklyOrdersWithMatches() {
   }
 
   const generateCSVBlob = (filteredSales) => {
+    const aggregatedSales = filteredSales.reduce((acc, sale) => {
+      const barcode = sale.barcode.padStart(13, '0');
+      if (!acc[barcode]) {
+        acc[barcode] = { barcode, quantity: 0 };
+      }
+      acc[barcode].quantity += sale.quantity;
+      return acc;
+    }, {});
+
     const csvRows = [
       ['Barcode', 'Quantity'], // Header
-      ...filteredSales.map(sale => [sale.barcode.padStart(13, '0'), sale.quantity])
+      ...Object.values(aggregatedSales).sort((a, b) => a.barcode.localeCompare(b.barcode)).map(sale => [sale.barcode, sale.quantity])
     ];
     const csvString = csvRows.map(row => row.join(',')).join('\n');
     return new Blob([csvString], { type: 'text/csv' });
