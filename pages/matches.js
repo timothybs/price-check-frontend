@@ -41,7 +41,7 @@ export default function WeeklyOrdersWithMatches() {
   }, [startDate, endDate])
 
   const homeTotal = useMemo(() => {
-    return sales.reduce((total, sale) => total + (sale.home_hardware_actual_price || 0), 0)
+    return sales.reduce((total, sale) => total + ((sale.home_hardware_actual_price || 0) * (sale.quantity || 0)), 0)
   }, [sales])
 
   const homeBestTotal = useMemo(() => {
@@ -49,12 +49,13 @@ export default function WeeklyOrdersWithMatches() {
       const h = parseFloat(sale.home_hardware_actual_price);
       const t = parseFloat(sale.toolbank_actual_price);
       const s = parseFloat(sale.stax_actual_price);
+      const quantity = sale.quantity || 0;
   
       const prices = [h, t, s].filter(p => !isNaN(p));
       const min = Math.min(...prices);
   
       if (!isNaN(h) && h === min) {
-        return total + h;
+        return total + (h * quantity);
       }
   
       return total;
@@ -62,7 +63,7 @@ export default function WeeklyOrdersWithMatches() {
   }, [sales]);
 
   const toolbankTotal = useMemo(() => {
-    return sales.reduce((total, sale) => total + (sale.toolbank_actual_price || 0), 0)
+    return sales.reduce((total, sale) => total + ((sale.toolbank_actual_price || 0) * (sale.quantity || 0)), 0)
   }, [sales])
 
   const toolbankBestTotal = useMemo(() => {
@@ -70,12 +71,13 @@ export default function WeeklyOrdersWithMatches() {
       const h = parseFloat(sale.home_hardware_actual_price);
       const t = parseFloat(sale.toolbank_actual_price);
       const s = parseFloat(sale.stax_actual_price);
+      const quantity = sale.quantity || 0;
   
       const prices = [h, t, s].filter(p => !isNaN(p));
       const min = Math.min(...prices);
   
       if (!isNaN(t) && t === min) {
-        return total + t;
+        return total + (t * quantity);
       }
   
       return total;
@@ -83,7 +85,7 @@ export default function WeeklyOrdersWithMatches() {
   }, [sales]);
 
   const staxTotal = useMemo(() => {
-    return sales.reduce((total, sale) => total + (sale.stax_actual_price || 0), 0)
+    return sales.reduce((total, sale) => total + ((sale.stax_actual_price || 0) * (sale.quantity || 0)), 0)
   }, [sales])
 
   const staxBestTotal = useMemo(() => {
@@ -91,12 +93,13 @@ export default function WeeklyOrdersWithMatches() {
       const h = parseFloat(sale.home_hardware_actual_price);
       const t = parseFloat(sale.toolbank_actual_price);
       const s = parseFloat(sale.stax_actual_price);
+      const quantity = sale.quantity || 0;
   
       const prices = [h, t, s].filter(p => !isNaN(p));
       const min = Math.min(...prices);
   
       if (!isNaN(s) && s === min) {
-        return total + s;
+        return total + (s * quantity);
       }
   
       return total;
