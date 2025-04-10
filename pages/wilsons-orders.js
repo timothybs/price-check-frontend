@@ -73,7 +73,7 @@ export default function WilsonsOrders() {
               <th style={th}>Barcode</th>
               <th style={th}>Product</th>
               <th style={th}>Description</th>
-              <th style={th}>Net Price</th>
+              <th style={th}>Unit Price</th>
               <th style={th}>Quantity Sold</th>
             </tr>
           </thead>
