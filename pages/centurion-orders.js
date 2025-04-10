@@ -16,12 +16,24 @@ export default function CenturionOrders() {
       if (startDate && endDate) {
         const { data, error } = await supabase
         .from('centurion_orders_mv')
-        .select('*')
+        .select('barcode, product, description, nett_price, quantity')
+        .gte('order_date', startDate)
+        .lte('order_date', endDate)
+
         if (error) {
           console.error('❌ Error fetching Centurion sales:', error.message)
         } else {
-          console.log('✅ Centurion Sales data:', data)
-          setCenturionSales(data)
+          const groupedData = data.reduce((acc, sale) => {
+            const existingSale = acc.find(item => item.barcode === sale.barcode);
+            if (existingSale) {
+              existingSale.quantity_sold += sale.quantity;
+            } else {
+              acc.push({ ...sale, quantity_sold: sale.quantity });
+            }
+            return acc;
+          }, []);
+          console.log('✅ Centurion Sales data:', groupedData)
+          setCenturionSales(groupedData)
         }
       }
     }

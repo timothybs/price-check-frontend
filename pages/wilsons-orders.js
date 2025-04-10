@@ -17,13 +17,21 @@ export default function WilsonsOrders() {
         const { data, error } = await supabase
           .from('wilsons_orders_mv')
           .select('*')
-          .gte('last_order_date', startDate)
-          .lte('last_order_date', endDate)
+          .gte('order_date', startDate)
+          .lte('order_date', endDate)
         if (error) {
           console.error('❌ Error fetching Wilsons sales:', error.message)
         } else {
           console.log('✅ Wilsons Sales data:', data)
-          setWilsonsSales(data)
+          const groupedData = data.reduce((acc, sale) => {
+            const { barcode, product, description, nett_price, quantity } = sale;
+            if (!acc[barcode]) {
+              acc[barcode] = { barcode, product, description, nett_price, quantity_sold: 0 };
+            }
+            acc[barcode].quantity_sold += quantity;
+            return acc;
+          }, {});
+          setWilsonsSales(Object.values(groupedData));
         }
       }
     }

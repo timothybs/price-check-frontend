@@ -21,11 +21,21 @@ export default function ToolstreamOrders() {
       } else {
         console.log('✅ Toolstream Sales data:', data)
         const filteredData = data.filter(sale => {
-          const lastOrderDate = new Date(sale.last_order_date);
-          return (!startDate || lastOrderDate >= new Date(startDate)) &&
-                 (!endDate || lastOrderDate <= new Date(endDate));
+          const orderDate = new Date(sale.order_date);
+          return (!startDate || orderDate >= new Date(startDate)) &&
+                 (!endDate || orderDate <= new Date(endDate));
         });
-        setToolstreamSales(filteredData);
+
+        const groupedData = filteredData.reduce((acc, sale) => {
+          const barcode = sale.barcode;
+          if (!acc[barcode]) {
+            acc[barcode] = { ...sale, quantity_sold: 0 };
+          }
+          acc[barcode].quantity_sold += sale.quantity;
+          return acc;
+        }, {});
+
+        setToolstreamSales(Object.values(groupedData));
       }
     }
 
@@ -39,8 +49,15 @@ export default function ToolstreamOrders() {
     }));
 
     const csvHeaders = 'variant_sku,quantity\n';
-    const csvRows = csvData.map(row => `${row.variant_sku},${row.quantity}`).join('\n');
-    const csvString = csvHeaders + csvRows;
+    const csvRows = csvData.reduce((acc, row) => {
+      if (!acc[row.variant_sku]) {
+        acc[row.variant_sku] = { variant_sku: row.variant_sku, quantity: 0 };
+      }
+      acc[row.variant_sku].quantity += row.quantity;
+      return acc;
+    }, {});
+
+    const csvString = csvHeaders + Object.values(csvRows).map(row => `${row.variant_sku},${row.quantity}`).join('\n');
 
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
