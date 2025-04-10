@@ -3,21 +3,14 @@ import { useEffect, useState } from 'react';
 export default function Home() {
   const [products, setProducts] = useState([]);
 
-  useEffect(() => {
-    fetch('http://localhost:3001/products?page=1&limit=10')
-      .then(res => res.json())
-      .then(data => setProducts(data.data || []));
-  }, []);
-
   return (
     <main style={{ padding: '2rem' }}>
-      <h1>🛒 Shopify Products</h1>
+      <h1>TBS Hardware Ordering</h1>
       <ul>
-        {products.map(p => (
-          <li key={p.id}>
-            {p.title} - £{p.price} - {p.barcode}
-          </li>
-        ))}
+        <li><a href="/matches">Weekly Order (HH-TB-ST)</a></li>
+        <li><a href="/centurion-orders">Centurion Orders</a></li>
+        <li><a href="/orders">Orders (WIP)</a></li>
+        <li><a href="/compare">Compare (WIP)</a></li>
       </ul>
     </main>
   );
