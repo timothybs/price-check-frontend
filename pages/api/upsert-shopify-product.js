@@ -7,13 +7,36 @@ const shopify = new Shopify({
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    const { variantId, price } = req.body;
+    console.log('Incoming POST request body:', req.body);
+    const { variant_id, suggestedPrice, product_id, title, inventory_item_id, cost } = req.body;
 
     try {
-      const variant = await shopify.productVariant.get(variantId);
+      const variant = await shopify.productVariant.get(variant_id);
       
       if (variant) {
-        await shopify.productVariant.update(variantId, { price });
+        await shopify.productVariant.update(variant_id, { price: suggestedPrice });
+        console.log(`Updated variant ${variant_id} with new price: ${suggestedPrice}`);
+        
+        if (title && title.trim() !== '') {
+          const existingProduct = await shopify.product.get(product_id);
+          console.log(`Existing title for product ${product_id}: ${existingProduct.title}`);
+          
+          if (existingProduct.title !== title) {
+            await shopify.product.update(product_id, { id: product_id, title });
+            console.log(`Updated product ${product_id} with new title: ${title}`);
+          } else {
+            console.log(`Skipped updating product ${product_id} as the title is unchanged.`);
+          }
+        }
+
+        if (cost) {
+          await shopify.inventoryItem.update(inventory_item_id, { cost });
+          console.log(`Updated inventory item ${inventory_item_id} with new cost: ${cost}`);
+        }
+
+        const updatedVariant = await shopify.productVariant.get(variant_id);
+        console.log('Updated variant details:', updatedVariant);
+
         res.status(200).json({ exists: true });
       } else {
         res.status(200).json({ exists: false });
@@ -22,7 +45,8 @@ export default async function handler(req, res) {
       if (error.statusCode === 404) {
         res.status(200).json({ exists: false });
       } else {
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Error in POST /api/upsert-shopify-product:', error);
+        res.status(500).json({ error: error.message || 'Internal Server Error' });
       }
     }
   } else if (req.method === 'GET') {

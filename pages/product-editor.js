@@ -13,7 +13,8 @@ const ProductEditor = () => {
         cost: '',
         listPrice: '',
         suggestedPrice: '',
-        variant_id: '' // Added variant_id to formData
+        variant_id: '', // Added variant_id to formData
+        product_id: '' // Added product_id to formData
     });
     const [shopifyData, setShopifyData] = useState(null);
     const [shopifyMessage, setShopifyMessage] = useState('');
@@ -46,8 +47,9 @@ const ProductEditor = () => {
         const allProducts = [];
 
         for (const { name, column } of suppliers) {
-            const { data, error } = await supabase
-                .from(`${name}_prices`)
+        const tableName = name === 'home_hardware' ? 'home_hardware_prices_with_discounts' : `${name}_prices`;
+        const { data, error } = await supabase
+                .from(tableName)
                 .select('*')
                 .eq(column, barcode);
 
@@ -68,7 +70,7 @@ const ProductEditor = () => {
                     case 'home_hardware':
                         normalizedProduct = {
                             title: product.Product_Name,
-                            net_price: parseFloat(product.CurrentListPrice) || 0
+                            net_price: parseFloat(product.home_hardware_actual_price).toFixed(2) || 0 // Updated net price field
                         };
                         break;
                     case 'stax':
@@ -114,32 +116,37 @@ const ProductEditor = () => {
             }));
         }
 
-        try {
-            const shopifyResponse = await fetch(`/api/upsert-shopify-product?barcode=${barcode}`);
-            if (!shopifyResponse.ok) {
-                console.error("Shopify fetch error: response not OK");
-                setShopifyMessage("Error fetching Shopify product data. Using fallback.");
-                setShopifyData(null);
-            } else {
-                const shopifyResult = await shopifyResponse.json();
-                if (shopifyResult.exists) {
-                    setShopifyData({
-                        title: shopifyResult.title,
-                        variant_price: shopifyResult.variant_price,
-                        cost: shopifyResult.cost
-                    });
-                    setShopifyMessage('');
-                } else if (shopifyResult.exists === false) {
-                    setShopifyMessage('This product does not yet exist in Shopify.');
-                    setShopifyData(null);
-                } else if (shopifyResult.duplicates) {
-                    setShopifyMessage('Warning: Duplicate products found. <a href="/duplicate-editor">Edit duplicates</a>');
-                    setShopifyData(null);
-                }
-            }
-        } catch (error) {
-            console.error("Error parsing Shopify response:", error);
-            setShopifyMessage("Error parsing Shopify product data.");
+        // Fetching Shopify data from Supabase
+        const { data: shopifyProducts, error: shopifyError } = await supabase
+            .from('shopify_products')
+            .select('*')
+            .eq('variant_barcode', barcode);
+
+        if (shopifyError) {
+            console.error("Error fetching Shopify products:", shopifyError.message);
+            setShopifyMessage("Error fetching Shopify product data.");
+            setShopifyData(null);
+            return;
+        }
+
+        if (shopifyProducts.length === 1) {
+            const shopifyProduct = shopifyProducts[0];
+            setShopifyData({
+                title: shopifyProduct.title,
+                variant_price: shopifyProduct.variant_price,
+                cost: shopifyProduct.cost
+            });
+            setFormData(prevData => ({
+                ...prevData,
+                variant_id: shopifyProduct.variant_id, // Store variant_id in formData
+                product_id: shopifyProduct.product_id // Store product_id in formData
+            }));
+            setShopifyMessage('');
+        } else if (shopifyProducts.length === 0) {
+            setShopifyMessage('This product does not yet exist in Shopify.');
+            setShopifyData(null);
+        } else {
+            setShopifyMessage('Warning: Duplicate products found. <a href="/duplicate-editor">Edit duplicates</a>');
             setShopifyData(null);
         }
     };
@@ -186,7 +193,8 @@ const ProductEditor = () => {
             cost: product.net_price,
             listPrice: '',
             suggestedPrice: roundedPrice,
-            variant_id: formData.variant_id // Ensure variant_id is retained
+            variant_id: formData.variant_id, // Ensure variant_id is retained
+            product_id: formData.product_id // Ensure product_id is retained
         });
     };
 
@@ -195,15 +203,21 @@ const ProductEditor = () => {
             return; // Abort the save operation if the user cancels
         }
         console.log(formData);
-        const response = await fetch('/api/upsert-shopify-product', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-        });
-        const result = await response.json();
-        console.log(result);
+        const costToSend = parseFloat(formData.cost); // Ensure cost is numeric
+        console.log(`Sending cost: ${costToSend}, inventory_item_id: ${formData.variant_id}`);
+        try {
+            const response = await fetch('/api/upsert-shopify-product', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ...formData, cost: costToSend }), // Send numeric cost
+            });
+            const result = await response.json();
+            console.log(result);
+        } catch (error) {
+            console.error("Error updating Shopify product:", error);
+        }
     };
 
     return (
@@ -274,6 +288,14 @@ const ProductEditor = () => {
                             value={formData.variant_id}
                             onChange={handleInputChange}
                             placeholder="Variant ID (optional)"
+                            style={{ width: '100%', padding: '10px', fontSize: '16px', marginBottom: '10px' }}
+                        />
+                        <input
+                            type="text"
+                            name="product_id" // Added product_id input field
+                            value={formData.product_id}
+                            onChange={handleInputChange}
+                            placeholder="Product ID (optional)"
                             style={{ width: '100%', padding: '10px', fontSize: '16px', marginBottom: '10px' }}
                         />
                         <input
