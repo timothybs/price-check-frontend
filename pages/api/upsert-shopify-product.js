@@ -1,4 +1,9 @@
 import Shopify from 'shopify-api-node';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const shopify = new Shopify({
   shopName: process.env.SHOPIFY_STORE_DOMAIN,
@@ -9,6 +14,7 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     console.log('Incoming POST request body:', req.body);
     const { variant_id, suggestedPrice, product_id, title, inventory_item_id, cost } = req.body;
+    console.log('Incoming values:', { variant_id, suggestedPrice, product_id, title, inventory_item_id, cost });
 
     try {
       const variant = await shopify.productVariant.get(variant_id);
@@ -22,20 +28,36 @@ export default async function handler(req, res) {
           console.log(`Existing title for product ${product_id}: ${existingProduct.title}`);
           
           if (existingProduct.title !== title) {
-            await shopify.product.update(product_id, { id: product_id, title });
+            await shopify.product.update(product_id, { id: product_id, title: String(title) });
             console.log(`Updated product ${product_id} with new title: ${title}`);
           } else {
             console.log(`Skipped updating product ${product_id} as the title is unchanged.`);
           }
         }
 
-        if (cost) {
+        if (cost && inventory_item_id) {
           await shopify.inventoryItem.update(inventory_item_id, { cost });
           console.log(`Updated inventory item ${inventory_item_id} with new cost: ${cost}`);
+        } else if (!inventory_item_id) {
+          console.warn(`No inventory_item_id provided. Skipping cost update.`);
         }
 
         const updatedVariant = await shopify.productVariant.get(variant_id);
         console.log('Updated variant details:', updatedVariant);
+
+        const { error: insertError, data: insertData } = await supabase
+          .from('product_editor_changes')
+          .insert([{
+            variant_id: String(variant_id),
+            product_id: String(product_id),
+            updated_at: new Date().toISOString()
+          }]);
+
+        if (insertError) {
+          console.error('Failed to log to product_editor_changes:', insertError);
+        } else {
+          console.log('Logged to product_editor_changes:', insertData);
+        }
 
         res.status(200).json({ exists: true });
       } else {
@@ -46,6 +68,14 @@ export default async function handler(req, res) {
         res.status(200).json({ exists: false });
       } else {
         console.error('Error in POST /api/upsert-shopify-product:', error);
+        if (error.response && error.response.body) {
+          try {
+            const body = await error.response.text();
+            console.error('Response body:', body);
+          } catch (e) {
+            console.error('Failed to read response body:', e);
+          }
+        }
         res.status(500).json({ error: error.message || 'Internal Server Error' });
       }
     }

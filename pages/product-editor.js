@@ -215,6 +215,22 @@ const ProductEditor = () => {
             });
             const result = await response.json();
             console.log(result);
+
+            console.log("📝 Logging to product_editor_changes:", formData);
+            // Insert a record into product_editor_changes
+            try {
+                await supabase
+                    .from('product_editor_changes')
+                    .insert({
+                        variant_id: formData.variant_id,
+                        product_id: formData.product_id,
+                        changes: formData // Include any other relevant changes if necessary
+                    });
+                console.log("Insert into product_editor_changes was successful.");
+            } catch (insertError) {
+                console.error("Error inserting into product_editor_changes:", insertError);
+            }
+
         } catch (error) {
             console.error("Error updating Shopify product:", error);
         }
@@ -328,7 +344,7 @@ const ProductEditor = () => {
                 <p>No products found.</p>
             )}
             <button onClick={handleSave} style={{ padding: '15px', fontSize: '18px', marginTop: '20px' }}>Save</button>
-        </div>
+       </div>
     );
 };
 
