@@ -57,13 +57,12 @@ const ProductEditor = () => {
                 console.warn(`❌ Error fetching supplier ${name}:`, error.message);
                 continue;
             }
-
             const taggedProducts = data.map(product => {
                 let normalizedProduct = {};
                 switch (name) {
                     case 'toolbank':
                         normalizedProduct = {
-                            title: product.Product_Name,
+                            title: product['Product Name'],
                             net_price: parseFloat(product.CurrentListPrice) || 0
                         };
                         break;
