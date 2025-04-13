@@ -145,7 +145,7 @@ const ProductEditor = () => {
             setShopifyMessage('This product does not yet exist in Shopify.');
             setShopifyData(null);
         } else {
-            setShopifyMessage('Warning: Duplicate products found. <a href="/duplicate-editor">Edit duplicates</a>');
+            setShopifyMessage(`Warning: Duplicate products found. <a href="/duplicate-editor?barcode=${barcode}">Edit duplicates</a>`);
             setShopifyData(null);
         }
     };
