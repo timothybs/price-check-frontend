@@ -22,6 +22,7 @@ const ProductEditor = () => {
     const [shopifyMessage, setShopifyMessage] = useState('');
     const [cameraError, setCameraError] = useState('');
     const [scanned, setScanned] = useState(false);
+    const [statusMessage, setStatusMessage] = useState('');
 
     useEffect(() => {
         const input = document.getElementById('barcode-input');
@@ -209,6 +210,7 @@ const ProductEditor = () => {
         if (!formData.variant_id && !confirm("No Variant ID entered. Do you want to create a new Shopify product?")) {
             return; // Abort the save operation if the user cancels
         }
+        setStatusMessage(formData.variant_id ? 'Updating product…' : 'Creating product…');
         console.log(formData);
         const costToSend = parseFloat(formData.cost); // Ensure cost is numeric
         console.log(`Sending cost: ${costToSend}, inventory_item_id: ${formData.variant_id}`);
@@ -218,10 +220,12 @@ const ProductEditor = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ ...formData, cost: costToSend }), // Send numeric cost
+            body: JSON.stringify({ ...formData, cost: costToSend, barcode }), // Send numeric cost
             });
             const result = await response.json();
+            if (result.message) setStatusMessage(result.message);
             console.log(result);
+            setTimeout(() => setStatusMessage(''), 3000);
 
             console.log("📝 Logging to product_editor_changes:", formData);
             // Insert a record into product_editor_changes
@@ -282,7 +286,7 @@ const ProductEditor = () => {
           // Request camera with rear-facing preference and improved resolution
           await navigator.mediaDevices.getUserMedia({
             video: {
-              facingMode: { exact: "environment" },
+              facingMode: { ideal: "environment" },
               width: { ideal: 1280 },
               height: { ideal: 720 }
             }
@@ -435,6 +439,7 @@ const ProductEditor = () => {
             ) : (
                 <p>No products found.</p>
             )}
+            {statusMessage && <p style={{ color: 'green' }}>{statusMessage}</p>}
             <button onClick={handleSave} style={{ padding: '15px', fontSize: '18px', marginTop: '20px' }}>Save</button>
        </div>
     );

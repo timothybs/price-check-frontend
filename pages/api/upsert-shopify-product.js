@@ -13,8 +13,50 @@ const shopify = new Shopify({
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     console.log('Incoming POST request body:', req.body);
-    const { variant_id, suggestedPrice, product_id, title, inventory_item_id, cost } = req.body;
-    console.log('Incoming values:', { variant_id, suggestedPrice, product_id, title, inventory_item_id, cost });
+    const { variant_id, suggestedPrice, product_id, title, inventory_item_id, cost, barcode } = req.body;
+    console.log('Incoming values:', { variant_id, suggestedPrice, product_id, title, inventory_item_id, cost, barcode });
+
+    if (!variant_id) {
+      const productData = {
+        title,
+        variants: [{
+          price: suggestedPrice,
+          inventory_management: 'shopify',
+          inventory_policy: 'deny',
+          requires_shipping: true,
+          taxable: true,
+          cost: cost || null,
+          barcode: barcode || null
+        }]
+      };
+
+      console.log('Creating new product with data:', productData);
+
+      const createdProduct = await shopify.product.create(productData);
+      const createdVariant = createdProduct.variants[0];
+      
+      try {
+        await supabase
+          .from('product_editor_creates')
+          .insert([{
+            variant_id: String(createdVariant.id),
+            product_id: String(createdProduct.id),
+            title: createdProduct.title,
+            created_at: new Date().toISOString()
+          }]);
+        console.log(`Logged created product to product_editor_creates: ${createdProduct.title}`);
+      } catch (logError) {
+        console.error('Failed to log to product_editor_creates:', logError.message);
+      }
+      
+      res.status(200).json({
+        created: true,
+        product_id: createdProduct.id,
+        variant_id: createdVariant.id,
+        message: `Product "${createdProduct.title}" created successfully on Shopify.`
+      });
+      return;
+    }
 
     try {
       const variant = await shopify.productVariant.get(variant_id);
