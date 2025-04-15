@@ -13,6 +13,7 @@ export default function Home() {
         <li><a href="/toolstream-orders">Toolstream Orders</a></li>
         <li><a href="/orders">Orders (WIP)</a></li>
         <li><a href="/compare">Compare (WIP)</a></li>
+        <li><a href="/product-editor">Product Editor (WIP)</a></li>
       </ul>
     </main>
   );
