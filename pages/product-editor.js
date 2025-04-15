@@ -320,7 +320,8 @@ const ProductEditor = () => {
     return (
         <div style={{ padding: '20px', fontSize: '18px' }}>
             <h1>Product Editor</h1>
-            <input
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '10px' }}>
+              <input
                 id="barcode-input"
                 type="text"
                 value={barcode}
@@ -328,18 +329,16 @@ const ProductEditor = () => {
                 onKeyPress={handleBarcodeKeyPress}
                 autoFocus
                 placeholder="Enter barcode"
-                style={{ width: '100%', padding: '15px', fontSize: '18px', marginBottom: '10px' }}
-            />
+                style={{ flex: '1', padding: '15px', fontSize: '18px' }}
+              />
+              {!scanned && (
+                <div style={{ flex: '1' }}>
+                  <video id="video-preview" style={{ width: '100%', maxHeight: '150px', marginBottom: '5px' }} />
+                </div>
+              )}
+            </div>
             <button onClick={handleSearchClick} style={{ padding: '15px', fontSize: '18px' }}>Search</button>
             {cameraError && <p style={{ color: 'red' }}>{cameraError}</p>}
-            {!scanned && (
-              <>
-                <video id="video-preview" style={{ width: '100%', maxHeight: '200px', marginBottom: '10px' }} />
-                <button onClick={startCameraScan} style={{ padding: '10px', fontSize: '16px', marginBottom: '20px' }}>
-                  Scan with Camera
-                </button>
-              </>
-            )}
             <button onClick={handleReset} style={{ padding: '10px', fontSize: '16px', marginBottom: '20px', marginLeft: '10px' }}>
               Reset
             </button>
