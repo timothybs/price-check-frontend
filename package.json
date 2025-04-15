@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
+    "@zxing/browser": "^0.1.5",
     "next": "^15.2.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

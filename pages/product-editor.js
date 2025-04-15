@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { BrowserMultiFormatReader } from '@zxing/browser';
+import { BarcodeFormat, DecodeHintType } from '@zxing/library';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;   
@@ -18,6 +20,7 @@ const ProductEditor = () => {
     });
     const [shopifyData, setShopifyData] = useState(null);
     const [shopifyMessage, setShopifyMessage] = useState('');
+    const [cameraError, setCameraError] = useState('');
 
     useEffect(() => {
         const input = document.getElementById('barcode-input');
@@ -235,6 +238,54 @@ const ProductEditor = () => {
         }
     };
 
+    const startCameraScan = async () => {
+    const hints = new Map();
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E,
+      BarcodeFormat.CODE_128,
+    ]);
+
+    const codeReader = new BrowserMultiFormatReader(hints);
+        try {
+          // Request camera with rear-facing preference and improved resolution
+          await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { exact: "environment" },
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            }
+          });
+      
+          const devices = await BrowserMultiFormatReader.listVideoInputDevices();
+          const backCamera = devices.find(device =>
+            /back|rear|environment/i.test(device.label)
+          );
+          
+          const deviceId = backCamera?.deviceId || devices[0]?.deviceId;
+          
+          if (!deviceId) {
+            setCameraError('No suitable camera found on this device.');
+            return;
+          }
+      
+          codeReader.decodeFromVideoDevice(deviceId, 'video-preview', (result, error) => {
+            if (result) {
+              const scannedBarcode = result.getText();
+              console.log('Scanned barcode:', scannedBarcode);
+              setBarcode(scannedBarcode);
+              fetchProducts(scannedBarcode);
+              codeReader.reset(); // stop scanning after successful read
+            }
+          });
+      
+        } catch (err) {
+          console.error('Camera access error:', err);
+          setCameraError('Unable to access camera. Please check permissions and try Safari.');
+        }
+      };
+
     return (
         <div style={{ padding: '20px', fontSize: '18px' }}>
             <h1>Product Editor</h1>
@@ -249,6 +300,11 @@ const ProductEditor = () => {
                 style={{ width: '100%', padding: '15px', fontSize: '18px', marginBottom: '10px' }}
             />
             <button onClick={handleSearchClick} style={{ padding: '15px', fontSize: '18px' }}>Search</button>
+            {cameraError && <p style={{ color: 'red' }}>{cameraError}</p>}
+            <video id="video-preview" style={{ width: '100%', maxHeight: '200px', marginBottom: '10px' }} />
+            <button onClick={startCameraScan} style={{ padding: '10px', fontSize: '16px', marginBottom: '20px' }}>
+                Scan with Camera
+            </button>
             {shopifyMessage && <p dangerouslySetInnerHTML={{ __html: shopifyMessage }}></p>}
             {shopifyData && (
                 <div>
