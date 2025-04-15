@@ -21,6 +21,7 @@ const ProductEditor = () => {
     const [shopifyData, setShopifyData] = useState(null);
     const [shopifyMessage, setShopifyMessage] = useState('');
     const [cameraError, setCameraError] = useState('');
+    const [scanned, setScanned] = useState(false);
 
     useEffect(() => {
         const input = document.getElementById('barcode-input');
@@ -28,6 +29,10 @@ const ProductEditor = () => {
             input.focus();
         }
     }, [products]);
+
+    useEffect(() => {
+      startCameraScan();
+    }, []);
 
     const calculateSuggestedRRP = (netPrice) => {
         if (!netPrice || isNaN(netPrice)) return 0;
@@ -238,6 +243,31 @@ const ProductEditor = () => {
         }
     };
 
+    const handleReset = () => {
+      setScanned(false);
+      setBarcode('');
+      setProducts([]);
+      setFormData({
+        title: '',
+        cost: '',
+        listPrice: '',
+        suggestedPrice: '',
+        variant_id: '',
+        product_id: ''
+      });
+      setShopifyData(null);
+      setShopifyMessage('');
+      setCameraError('');
+
+      setTimeout(() => {
+        const input = document.getElementById('barcode-input');
+        if (input) {
+          input.focus();
+        }
+        startCameraScan();
+      }, 100);
+    };
+
     const startCameraScan = async () => {
     const hints = new Map();
     hints.set(DecodeHintType.POSSIBLE_FORMATS, [
@@ -274,6 +304,7 @@ const ProductEditor = () => {
             if (result) {
               const scannedBarcode = result.getText();
               console.log('Scanned barcode:', scannedBarcode);
+              setScanned(true);
               setBarcode(scannedBarcode);
               fetchProducts(scannedBarcode);
               codeReader.reset(); // stop scanning after successful read
@@ -301,9 +332,16 @@ const ProductEditor = () => {
             />
             <button onClick={handleSearchClick} style={{ padding: '15px', fontSize: '18px' }}>Search</button>
             {cameraError && <p style={{ color: 'red' }}>{cameraError}</p>}
-            <video id="video-preview" style={{ width: '100%', maxHeight: '200px', marginBottom: '10px' }} />
-            <button onClick={startCameraScan} style={{ padding: '10px', fontSize: '16px', marginBottom: '20px' }}>
-                Scan with Camera
+            {!scanned && (
+              <>
+                <video id="video-preview" style={{ width: '100%', maxHeight: '200px', marginBottom: '10px' }} />
+                <button onClick={startCameraScan} style={{ padding: '10px', fontSize: '16px', marginBottom: '20px' }}>
+                  Scan with Camera
+                </button>
+              </>
+            )}
+            <button onClick={handleReset} style={{ padding: '10px', fontSize: '16px', marginBottom: '20px', marginLeft: '10px' }}>
+              Reset
             </button>
             {shopifyMessage && <p dangerouslySetInnerHTML={{ __html: shopifyMessage }}></p>}
             {shopifyData && (
