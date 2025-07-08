@@ -4,3 +4,4 @@
 .DS_Store
 .next
 node_modules
+.env* # Make sure to ignore envs
